@@ -43,6 +43,24 @@ namespace SmartOrder.API.Data
             builder.Entity<Invoice>()
                 .Property(i => i.TotalAmount)
                 .HasPrecision(18, 2);
+
+            builder.Entity<Order>()
+                .Property(o => o.TotalAmount)
+                 .HasPrecision(18, 2);
+
+            builder.Entity<Order>()
+                .HasOne(o => o.Customer)
+                .WithMany()
+                .HasForeignKey(o => o.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Order>()
+                .HasOne(o => o.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(o => o.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
         }
     }
 }

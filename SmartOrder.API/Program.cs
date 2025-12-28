@@ -8,6 +8,7 @@ using SmartOrder.API.Helpers;
 using SmartOrder.API.Middleware;
 using SmartOrder.API.Models.Entities;
 using SmartOrder.API.Services;
+using SmartOrder.API.Services.Interfaces;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -58,7 +59,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 // JWT Helper
 builder.Services.AddScoped<JwtTokenGenerator>();
 builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 
 // Authentication (JWT)
