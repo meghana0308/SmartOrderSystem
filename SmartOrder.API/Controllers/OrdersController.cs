@@ -22,6 +22,9 @@ public class OrdersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(CreateOrderDto dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
         var orderId = await _orderService.CreateOrderAsync(userId, dto);
@@ -32,6 +35,7 @@ public class OrdersController : ControllerBase
             orderId
         });
     }
+
 
     [HttpGet("my")]
     [Authorize(Roles = "Customer")]

@@ -36,8 +36,10 @@ public class OrderService : IOrderService
         var order = new Order
         {
             CustomerId = customerId,
-            CreatedByUserId = userId
+            CreatedByUserId = userId,
+            Status = OrderStatus.Created
         };
+
 
         decimal total = 0;
 
@@ -55,6 +57,8 @@ public class OrderService : IOrderService
             if (product.StockQuantity < item.Quantity)
                 throw new InvalidOperationException($"Insufficient stock for {product.Name}");
 
+            product.StockQuantity -= item.Quantity;
+
             order.OrderItems.Add(new OrderItem
             {
                 ProductId = product.Id,
@@ -63,6 +67,7 @@ public class OrderService : IOrderService
             });
 
             total += product.UnitPrice * item.Quantity;
+
         }
 
         order.TotalAmount = total;
@@ -79,7 +84,9 @@ public class OrderService : IOrderService
             .Where(o => o.CustomerId == userId);
 
         if (!string.IsNullOrEmpty(query.Status))
-            orders = orders.Where(o => o.Status.ToString() == query.Status);
+            if (Enum.TryParse<OrderStatus>(query.Status, true, out var status))
+                orders = orders.Where(o => o.Status == status);
+
 
         return await orders
             .OrderByDescending(o => o.OrderDate)
@@ -101,7 +108,9 @@ public class OrderService : IOrderService
             .Where(o => o.CreatedByUserId == userId);
 
         if (!string.IsNullOrEmpty(query.Status))
-            orders = orders.Where(o => o.Status.ToString() == query.Status);
+            if (Enum.TryParse<OrderStatus>(query.Status, true, out var status))
+                orders = orders.Where(o => o.Status == status);
+
 
         return await orders
             .OrderByDescending(o => o.OrderDate)
