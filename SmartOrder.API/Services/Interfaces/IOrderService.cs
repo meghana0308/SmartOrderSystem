@@ -1,4 +1,5 @@
-﻿using SmartOrder.API.Models.DTOs.Orders;
+﻿using SmartOrder.API.Enums;
+using SmartOrder.API.Models.DTOs.Orders;
 
 namespace SmartOrder.API.Services.Interfaces
 {
@@ -10,6 +11,8 @@ namespace SmartOrder.API.Services.Interfaces
 
         Task UpdateOrderAsync(int orderId, string userId, UpdateOrderDto dto);
         Task CancelOrderAsync(int orderId, string userId);
+
+        Task UpdateOrderStatusAsync(int orderId, string warehouseUserId, OrderStatus status);
 
 
     }

@@ -193,11 +193,12 @@ public class OrderService : IOrderService
         if (order == null)
             throw new KeyNotFoundException("Order not found");
 
-        if (order.Status != OrderStatus.Created)
-            throw new InvalidOperationException("Only orders with status 'Created' can be cancelled");
+        if (order.Status == OrderStatus.Shipped || order.Status == OrderStatus.Delivered)
+            throw new InvalidOperationException("Order cannot be cancelled after it is shipped");
+
 
         if (order.CreatedByUserId != userId && order.CustomerId != userId)
-            throw new UnauthorizedAccessException("You can only cancel your own orders");
+            throw new InvalidOperationException("You can only cancel your own orders");
 
         // Restore stock
         foreach (var item in order.OrderItems)
@@ -208,6 +209,40 @@ public class OrderService : IOrderService
         }
 
         order.Status = OrderStatus.Cancelled;
+        await _context.SaveChangesAsync();
+    }
+
+    private static bool IsValidTransition(OrderStatus current, OrderStatus next)
+    {
+        return current switch
+        {
+            OrderStatus.Created => next == OrderStatus.Approved,
+            OrderStatus.Approved => next == OrderStatus.Packed,
+            OrderStatus.Packed => next == OrderStatus.Shipped,
+            OrderStatus.Shipped => next == OrderStatus.Delivered,
+            _ => false
+        };
+    }
+
+    public async Task UpdateOrderStatusAsync(int orderId, string warehouseUserId, OrderStatus newStatus)
+    {
+        var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+
+        if (order == null)
+            throw new KeyNotFoundException("Order not found");
+
+        if (order.Status == OrderStatus.Cancelled)
+            throw new InvalidOperationException("Cancelled orders cannot be updated");
+
+        if (order.Status == OrderStatus.Delivered)
+            throw new InvalidOperationException("Delivered orders cannot be updated");
+
+        if (!IsValidTransition(order.Status, newStatus))
+            throw new InvalidOperationException(
+                $"Invalid status transition from {order.Status} to {newStatus}"
+            );
+
+        order.Status = newStatus;
         await _context.SaveChangesAsync();
     }
 

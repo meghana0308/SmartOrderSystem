@@ -66,6 +66,48 @@ namespace SmartOrder.API.Data
                     await userManager.AddToRoleAsync(user, "Admin");
                 }
             }
+            // Seed Sales Executive
+            var salesEmail = "sales@gmail.com";
+            var salesUser = await userManager.FindByEmailAsync(salesEmail);
+
+            if (salesUser == null)
+            {
+                var user = new ApplicationUser
+                {
+                    UserName = salesEmail,
+                    Email = salesEmail,
+                    FullName = "Sales Executive",
+                    EmailConfirmed = true
+                };
+
+                var result = await userManager.CreateAsync(user, "Sales@123");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user, "SalesExecutive");
+                }
+            }
+
+            // Seed Warehouse Manager
+            var warehouseEmail = "warehouse@gmail.com";
+            var warehouseUser = await userManager.FindByEmailAsync(warehouseEmail);
+
+            if (warehouseUser == null)
+            {
+                var user = new ApplicationUser
+                {
+                    UserName = warehouseEmail,
+                    Email = warehouseEmail,
+                    FullName = "Warehouse Manager",
+                    EmailConfirmed = true
+                };
+
+                var result = await userManager.CreateAsync(user, "Warehouse@123");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user, "WarehouseManager");
+                }
+            }
+
 
         }
     }

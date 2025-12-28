@@ -9,7 +9,7 @@ namespace SmartOrder.API.Controllers;
 
 [ApiController]
 [Route("api/orders")]
-[Authorize(Roles = "Customer,Sales")]
+[Authorize]
 public class OrdersController : ControllerBase
 {
     private readonly IOrderService _orderService;
@@ -46,7 +46,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet("created")]
-    [Authorize(Roles = "Sales")]
+    [Authorize(Roles = "SalesExecutive")]
     public async Task<IActionResult> CreatedOrders([FromQuery] OrderQueryDto query)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -68,5 +68,20 @@ public class OrdersController : ControllerBase
         await _orderService.CancelOrderAsync(id, userId);
         return Ok(new { message = "Order cancelled successfully" });
     }
+
+    [HttpPut("{id}/status")]
+    [Authorize(Roles = "WarehouseManager")]
+    public async Task<IActionResult> UpdateStatus(int id, UpdateOrderStatusDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+        await _orderService.UpdateOrderStatusAsync(id, userId, dto.Status);
+
+        return Ok(new
+        {
+            message = $"Order status updated to {dto.Status}"
+        });
+    }
+
 
 }

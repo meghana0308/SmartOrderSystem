@@ -36,9 +36,11 @@ namespace SmartOrder.API.Middleware
                 ArgumentNullException => HttpStatusCode.BadRequest,
                 ArgumentException => HttpStatusCode.BadRequest,
                 InvalidOperationException => HttpStatusCode.BadRequest,
+                UnauthorizedAccessException => HttpStatusCode.Forbidden,
                 KeyNotFoundException => HttpStatusCode.NotFound,
                 _ => HttpStatusCode.InternalServerError
             };
+
 
 
             context.Response.StatusCode = (int)statusCode;

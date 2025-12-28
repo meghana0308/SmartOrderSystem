@@ -9,6 +9,7 @@ using SmartOrder.API.Middleware;
 using SmartOrder.API.Models.Entities;
 using SmartOrder.API.Services;
 using SmartOrder.API.Services.Interfaces;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -68,6 +69,7 @@ builder.Services.AddAuthentication(options =>
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
+
 .AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -80,9 +82,11 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
-        )
+        ),
+        RoleClaimType = ClaimTypes.Role 
     };
 });
+
 
 // Authorization
 builder.Services.AddAuthorization();
