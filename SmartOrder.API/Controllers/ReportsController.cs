@@ -43,15 +43,12 @@ public class ReportsController : ControllerBase
         return Ok(sales);
     }
 
+   // For every product, how many units have we sold in total and how much money did it generate?
     [HttpGet("sales/by-product")]
     [Authorize(Roles = "SalesExecutive")]
-    public async Task<IActionResult> GetSalesByProduct(
-        DateTime fromDate,
-        DateTime toDate)
+    public async Task<IActionResult> GetSalesByProduct()
     {
-        var report = await _context.Orders
-            .Where(o => o.OrderDate >= fromDate && o.OrderDate < toDate.AddDays(1))
-            .SelectMany(o => o.OrderItems)
+        var report = await _context.OrderItems
             .GroupBy(oi => new
             {
                 oi.ProductId,
@@ -64,7 +61,6 @@ public class ReportsController : ControllerBase
                 TotalQuantitySold = g.Sum(x => x.Quantity),
                 TotalRevenue = g.Sum(x => x.Quantity * x.UnitPrice)
             })
-            .OrderByDescending(x => x.TotalRevenue)
             .ToListAsync();
 
         return Ok(report);
