@@ -76,6 +76,7 @@ public class ProductService : IProductService
         await _context.SaveChangesAsync();
     }
 
+    // ---------- PRODUCT (CATALOG ONLY) ----------
     public async Task<int> CreateProductAsync(CreateProductDto dto)
     {
         var categoryExists = await _context.Categories
@@ -89,8 +90,8 @@ public class ProductService : IProductService
             Name = dto.Name,
             UnitPrice = dto.UnitPrice,
             CategoryId = dto.CategoryId,
-            StockQuantity = dto.StockQuantity,
-            ReorderLevel = dto.ReorderLevel
+            StockQuantity = 0,
+            ReorderLevel = 0
         };
 
 
@@ -126,12 +127,6 @@ public class ProductService : IProductService
 
         if (dto.UnitPrice > 0)
             product.UnitPrice = dto.UnitPrice;
-
-        if (dto.StockQuantity > 0)
-            product.StockQuantity = dto.StockQuantity;
-
-        if (dto.ReorderLevel > 0)
-            product.ReorderLevel = dto.ReorderLevel;
 
         product.UpdatedAt = DateTime.UtcNow;
 
@@ -184,21 +179,5 @@ public class ProductService : IProductService
             })
             .ToListAsync();
     }
-
-    public async Task<List<ProductResponseDto>> GetLowStockProductsAsync()
-    {
-        return await _context.Products
-            .Where(p => !p.IsDeleted && p.StockQuantity <= p.ReorderLevel)
-            .Include(p => p.Category)
-            .Select(p => new ProductResponseDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                UnitPrice = p.UnitPrice,
-                CategoryName = p.Category!.Name
-            })
-            .ToListAsync();
-    }
-
 
 }

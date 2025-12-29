@@ -51,11 +51,5 @@ public class ProductsController : ControllerBase
         return Ok(await _service.GetProductsByCategoryAsync(categoryId));
     }
 
-    [HttpGet("lowstock")]
-    public async Task<IActionResult> GetLowStock()
-    {
-        var products = await _service.GetLowStockProductsAsync();
-        return Ok(products);
-    }
 
 }

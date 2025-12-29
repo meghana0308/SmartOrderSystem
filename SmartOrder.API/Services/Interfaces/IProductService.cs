@@ -2,18 +2,17 @@
 
 public interface IProductService
 {
-    // CATEGORY (existing)
+    // CATEGORY
     Task<int> CreateCategoryAsync(CategoryCreateDto dto);
     Task<List<CategoryResponseDto>> GetAllCategoriesAsync();
     Task UpdateCategoryAsync(int id, CategoryUpdateDto dto);
     Task DeleteCategoryAsync(int id);
 
-    // PRODUCT (new)
+    // PRODUCT (CATALOG ONLY)
     Task<int> CreateProductAsync(CreateProductDto dto);
     Task UpdateProductAsync(int id, UpdateProductDto dto);
     Task DeleteProductAsync(int id);
-    Task<List<ProductResponseDto>> GetAllProductsAsync();
-    Task<List<ProductResponseDto>> GetLowStockProductsAsync();
 
+    Task<List<ProductResponseDto>> GetAllProductsAsync();
     Task<List<ProductResponseDto>> GetProductsByCategoryAsync(int categoryId);
 }

@@ -61,7 +61,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 builder.Services.AddScoped<JwtTokenGenerator>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
-
+builder.Services.AddScoped<IInventoryService, InventoryService>();
 
 // Authentication (JWT)
 builder.Services.AddAuthentication(options =>
