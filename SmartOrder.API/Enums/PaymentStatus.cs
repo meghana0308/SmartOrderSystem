@@ -2,8 +2,9 @@
 
 public enum PaymentStatus
 {
-    Pending = 1,
-    Paid = 2,
-    Failed = 3,
-    Refunded = 4
+    Pending = 1,       
+    Unpaid = 2,        
+    Paid = 3,
+    Failed = 4,
+    Refunded = 5
 }

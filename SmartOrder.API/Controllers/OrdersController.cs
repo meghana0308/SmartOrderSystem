@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartOrder.API.Models.DTOs.Orders;
-using SmartOrder.API.Services;
 using SmartOrder.API.Services.Interfaces;
 using System.Security.Claims;
 
@@ -20,7 +19,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(CreateOrderDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateOrderDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
@@ -35,7 +34,6 @@ public class OrdersController : ControllerBase
             orderId
         });
     }
-
 
     [HttpGet("my")]
     [Authorize(Roles = "Customer")]
@@ -54,10 +52,14 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateOrder(int id, UpdateOrderDto dto)
+    public async Task<IActionResult> UpdateOrder(int id, [FromBody] UpdateOrderDto dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         await _orderService.UpdateOrderAsync(id, userId, dto);
+
         return Ok(new { message = "Order updated successfully" });
     }
 
@@ -71,10 +73,9 @@ public class OrdersController : ControllerBase
 
     [HttpPut("{id}/status")]
     [Authorize(Roles = "WarehouseManager")]
-    public async Task<IActionResult> UpdateStatus(int id, UpdateOrderStatusDto dto)
+    public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateOrderStatusDto dto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-
         await _orderService.UpdateOrderStatusAsync(id, userId, dto.Status);
 
         return Ok(new
@@ -82,6 +83,4 @@ public class OrdersController : ControllerBase
             message = $"Order status updated to {dto.Status}"
         });
     }
-
-
 }

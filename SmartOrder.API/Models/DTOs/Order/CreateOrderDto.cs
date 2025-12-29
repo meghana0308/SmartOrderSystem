@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using SmartOrder.API.Models.Entities;
 
 namespace SmartOrder.API.Models.DTOs.Orders;
 
@@ -9,4 +10,6 @@ public class CreateOrderDto
 
     [Required]
     public List<CreateOrderItemDto> Items { get; set; } = new();
+
+    public PaymentMode PaymentMode { get; set; } = PaymentMode.PayLater;
 }

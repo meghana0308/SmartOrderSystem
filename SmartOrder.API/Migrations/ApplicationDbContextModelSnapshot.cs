@@ -263,6 +263,9 @@ namespace SmartOrder.API.Migrations
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
+                    b.Property<int>("PaymentStatus")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("TotalAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -273,6 +276,38 @@ namespace SmartOrder.API.Migrations
                         .IsUnique();
 
                     b.ToTable("Invoices");
+                });
+
+            modelBuilder.Entity("SmartOrder.API.Models.Entities.InvoiceItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("InvoiceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.ToTable("InvoiceItems");
                 });
 
             modelBuilder.Entity("SmartOrder.API.Models.Entities.Order", b =>
@@ -293,6 +328,13 @@ namespace SmartOrder.API.Migrations
 
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("PaymentMode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PaymentStatus")
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -443,6 +485,17 @@ namespace SmartOrder.API.Migrations
                     b.Navigation("Order");
                 });
 
+            modelBuilder.Entity("SmartOrder.API.Models.Entities.InvoiceItem", b =>
+                {
+                    b.HasOne("SmartOrder.API.Models.Entities.Invoice", "Invoice")
+                        .WithMany("InvoiceItems")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
+                });
+
             modelBuilder.Entity("SmartOrder.API.Models.Entities.Order", b =>
                 {
                     b.HasOne("SmartOrder.API.Models.Entities.ApplicationUser", "CreatedByUser")
@@ -494,6 +547,11 @@ namespace SmartOrder.API.Migrations
             modelBuilder.Entity("SmartOrder.API.Models.Entities.Category", b =>
                 {
                     b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("SmartOrder.API.Models.Entities.Invoice", b =>
+                {
+                    b.Navigation("InvoiceItems");
                 });
 
             modelBuilder.Entity("SmartOrder.API.Models.Entities.Order", b =>

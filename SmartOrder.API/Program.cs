@@ -93,6 +93,11 @@ builder.Services.AddAuthorization();
 
 // Controllers + Centralized Validation Errors
 builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Convert all enums to strings in JSON
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    })
     .ConfigureApiBehaviorOptions(options =>
     {
         options.InvalidModelStateResponseFactory = context =>
@@ -117,6 +122,7 @@ builder.Services.AddControllers()
             return new BadRequestObjectResult(response);
         };
     });
+
 
 var app = builder.Build();
 
