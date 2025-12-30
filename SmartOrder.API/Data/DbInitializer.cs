@@ -108,6 +108,27 @@ namespace SmartOrder.API.Data
                 }
             }
 
+            // Seed Finance Officer
+            var financeEmail = "finance@gmail.com";
+            var financeUser = await userManager.FindByEmailAsync(financeEmail);
+
+            if (financeUser == null)
+            {
+                var user = new ApplicationUser
+                {
+                    UserName = financeEmail,
+                    Email = financeEmail,
+                    FullName = "Finance Officer",
+                    EmailConfirmed = true
+                };
+
+                var result = await userManager.CreateAsync(user, "Finance@123");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user, "FinanceOfficer");
+                }
+            }
+
 
         }
     }

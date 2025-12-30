@@ -20,9 +20,11 @@ public class AdminController : ControllerBase
 
     [HttpPost("categories")]
     public async Task<IActionResult> CreateCategory([FromBody] CategoryCreateDto dto)
-
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User not authenticated");
+
         var id = await _productService.CreateCategoryAsync(userId, dto);
         return Ok(new { CategoryId = id });
     }
@@ -37,6 +39,9 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryUpdateDto dto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User not authenticated");
+
         await _productService.UpdateCategoryAsync(userId, id, dto);
         return NoContent();
     }
@@ -45,6 +50,9 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> DeleteCategory(int id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User not authenticated");
+
         await _productService.DeleteCategoryAsync(userId, id);
         return NoContent();
     }

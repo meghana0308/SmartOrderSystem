@@ -30,20 +30,25 @@ public class InventoryController : ControllerBase
     }
 
     [HttpPut("{productId}/stock")]
-    public async Task<IActionResult> UpdateStock(int productId,[FromBody] UpdateStockDto dto)
+    public async Task<IActionResult> UpdateStock(int productId, [FromBody] UpdateStockDto dto)
     {
-        var userId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
-        await _inventoryService.UpdateStockAsync(userId, productId, dto);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User not authenticated");
 
+        await _inventoryService.UpdateStockAsync(userId, productId, dto);
         return NoContent();
     }
 
     [HttpPut("{productId}/reorder-level")]
-    public async Task<IActionResult> UpdateReorderLevel(int productId,[FromBody] UpdateReorderLevelDto dto)
+    public async Task<IActionResult> UpdateReorderLevel(int productId, [FromBody] UpdateReorderLevelDto dto)
     {
-        var userId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
-        await _inventoryService.UpdateReorderLevelAsync(userId, productId, dto);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User not authenticated");
 
+        await _inventoryService.UpdateReorderLevelAsync(userId, productId, dto);
         return NoContent();
     }
+
 }

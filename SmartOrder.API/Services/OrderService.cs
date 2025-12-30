@@ -225,8 +225,14 @@ public class OrderService : IOrderService
         }
 
         order.Status = OrderStatus.Cancelled;
+
+        order.PaymentStatus = order.PaymentMode == PaymentMode.PayNow
+            ? PaymentStatus.Refunded
+            : PaymentStatus.Unpaid;
+
         await _context.SaveChangesAsync();
     }
+
 
     private static bool IsValidTransition(OrderStatus current, OrderStatus next) =>
         current switch
