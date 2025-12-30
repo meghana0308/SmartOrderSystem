@@ -13,6 +13,7 @@ public class InventoryService : IInventoryService
     {
         _context = context;
     }
+   
 
     public async Task<List<InventoryProductDto>> GetAllInventoryProductsAsync()
     {
@@ -46,8 +47,11 @@ public class InventoryService : IInventoryService
             .ToListAsync();
     }
 
-    public async Task UpdateStockAsync(int productId, UpdateStockDto dto)
+    public async Task UpdateStockAsync(string userId, int productId, UpdateStockDto dto)
     {
+        if (!await UserInRoleAsync(userId, "WarehouseManager"))
+            throw new UnauthorizedAccessException("Only WarehouseManager can update inventory");
+
         var product = await _context.Products
             .FirstOrDefaultAsync(p => p.Id == productId && !p.IsDeleted);
 
@@ -63,8 +67,12 @@ public class InventoryService : IInventoryService
         await _context.SaveChangesAsync();
     }
 
-    public async Task UpdateReorderLevelAsync(int productId, UpdateReorderLevelDto dto)
+    public async Task UpdateReorderLevelAsync(string userId, int productId, UpdateReorderLevelDto dto)
+
     {
+        if (!await UserInRoleAsync(userId, "WarehouseManager"))
+            throw new UnauthorizedAccessException("Only WarehouseManager can update inventory");
+
         var product = await _context.Products
             .FirstOrDefaultAsync(p => p.Id == productId && !p.IsDeleted);
 
@@ -79,4 +87,11 @@ public class InventoryService : IInventoryService
 
         await _context.SaveChangesAsync();
     }
+    private async Task<bool> UserInRoleAsync(string userId, string role)
+    {
+        return await _context.UserRoles.AnyAsync(ur =>
+            ur.UserId == userId &&
+            _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == role));
+    }
+
 }

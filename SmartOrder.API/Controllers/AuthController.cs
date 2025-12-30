@@ -20,10 +20,14 @@ namespace SmartOrder.API.Controllers
             _userManager = userManager;
             _jwtTokenGenerator = jwtTokenGenerator;
         }
+        // NOTE:
+        // In this system, Email is used as the Username.
+        // Users authenticate using Email + Password.
+        // No separate username is supported.
 
         // ---------------- REGISTER ----------------
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterRequestDto dto)
+        public async Task<IActionResult> Register([FromBody] RegisterRequestDto dto)
         {
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
             if (existingUser != null)
@@ -48,7 +52,7 @@ namespace SmartOrder.API.Controllers
 
         // ---------------- LOGIN ----------------
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginRequestDto dto)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
         {
             var user = await _userManager.FindByEmailAsync(dto.Email);
             if (user == null)

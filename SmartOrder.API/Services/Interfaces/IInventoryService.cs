@@ -6,6 +6,7 @@ public interface IInventoryService
 {
     Task<List<InventoryProductDto>> GetAllInventoryProductsAsync();
     Task<List<InventoryProductDto>> GetLowStockProductsAsync();
-    Task UpdateStockAsync(int productId, UpdateStockDto dto);
-    Task UpdateReorderLevelAsync(int productId, UpdateReorderLevelDto dto);
+    Task UpdateStockAsync(string userId, int productId, UpdateStockDto dto);
+    Task UpdateReorderLevelAsync(string userId, int productId, UpdateReorderLevelDto dto);
 }
+

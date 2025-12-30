@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SmartOrder.API.Models.DTOs.Product;
 using SmartOrder.API.Services;
+using System.Security.Claims;
 
 namespace SmartOrder.API.Controllers;
 
@@ -18,9 +19,11 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("categories")]
-    public async Task<IActionResult> CreateCategory(CategoryCreateDto dto)
+    public async Task<IActionResult> CreateCategory([FromBody] CategoryCreateDto dto)
+
     {
-        var id = await _productService.CreateCategoryAsync(dto);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var id = await _productService.CreateCategoryAsync(userId, dto);
         return Ok(new { CategoryId = id });
     }
 
@@ -31,16 +34,18 @@ public class AdminController : ControllerBase
     }
 
     [HttpPut("categories/{id}")]
-    public async Task<IActionResult> UpdateCategory(int id, CategoryUpdateDto dto)
+    public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryUpdateDto dto)
     {
-        await _productService.UpdateCategoryAsync(id, dto);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        await _productService.UpdateCategoryAsync(userId, id, dto);
         return NoContent();
     }
 
     [HttpDelete("categories/{id}")]
     public async Task<IActionResult> DeleteCategory(int id)
     {
-        await _productService.DeleteCategoryAsync(id);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        await _productService.DeleteCategoryAsync(userId, id);
         return NoContent();
     }
 }

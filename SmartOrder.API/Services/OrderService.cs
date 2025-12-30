@@ -16,14 +16,24 @@ public class OrderService : IOrderService
         _context = context;
     }
 
+    private async Task<bool> UserInRoleAsync(string userId, string role)
+    {
+        return await _context.UserRoles.AnyAsync(ur =>
+            ur.UserId == userId &&
+            _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == role));
+    }
+
+
     public async Task<int> CreateOrderAsync(string userId, CreateOrderDto dto)
     {
         if (dto.Items.Count == 0)
             throw new ArgumentException("Order must contain at least one item");
 
-        var isSales = await _context.UserRoles
-            .AnyAsync(ur => ur.UserId == userId &&
-                _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == "Sales"));
+        var isSales = await UserInRoleAsync(userId, "SalesExecutive");
+        var isCustomer = await UserInRoleAsync(userId, "Customer");
+
+        if (!isSales && !isCustomer)
+            throw new UnauthorizedAccessException("Only Customer or SalesExecutive can create orders");
 
         string customerId;
         if (isSales)
@@ -82,6 +92,7 @@ public class OrderService : IOrderService
         await _context.SaveChangesAsync();
         return order.Id;
     }
+
 
     public async Task<List<OrderListDto>> GetMyOrdersAsync(string userId, OrderQueryDto query)
     {

@@ -6,7 +6,7 @@ using SmartOrder.API.Models.DTOs.Reports;
 using SmartOrder.API.Models.DTOs.Inventory;
 
 namespace SmartOrder.API.Controllers;
-
+[Authorize]
 [ApiController]
 [Route("api/reports")]
 public class ReportsController : ControllerBase
@@ -28,8 +28,8 @@ public class ReportsController : ControllerBase
         DateTime fromDate,
         DateTime toDate)
     {
-        var sales = await _context.Orders
-            .Where(o => o.OrderDate >= fromDate && o.OrderDate <= toDate)
+        var sales = await _context.Orders.AsNoTracking()
+            .Where(o => o.OrderDate >= fromDate && o.OrderDate <= toDate.AddDays(1))
             .GroupBy(o => o.OrderDate.Date)
             .Select(g => new
             {
@@ -48,7 +48,7 @@ public class ReportsController : ControllerBase
     [Authorize(Roles = "SalesExecutive")]
     public async Task<IActionResult> GetSalesByProduct()
     {
-        var report = await _context.OrderItems
+        var report = await _context.OrderItems.AsNoTracking()
             .GroupBy(oi => new
             {
                 oi.ProductId,
@@ -110,8 +110,8 @@ public class ReportsController : ControllerBase
         fromDate ??= DateTime.UtcNow.AddMonths(-1); // default last 1 month
         toDate ??= DateTime.UtcNow;
 
-        var report = await _context.Orders
-            .Where(o => o.OrderDate >= fromDate && o.OrderDate <= toDate)
+        var report = await _context.Orders.AsNoTracking()
+            .Where(o => o.OrderDate >= fromDate && o.OrderDate <= toDate.Value.AddDays(1))
             .SelectMany(o => o.OrderItems)
             .GroupBy(oi => new
             {

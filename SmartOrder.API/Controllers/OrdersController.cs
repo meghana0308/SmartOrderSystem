@@ -19,6 +19,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Customer,SalesExecutive")]
     public async Task<IActionResult> Create([FromBody] CreateOrderDto dto)
     {
         if (!ModelState.IsValid)
@@ -52,6 +53,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Customer,SalesExecutive")]
     public async Task<IActionResult> UpdateOrder(int id, [FromBody] UpdateOrderDto dto)
     {
         if (!ModelState.IsValid)
@@ -64,6 +66,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPut("{id}/cancel")]
+    [Authorize(Roles = "Customer,SalesExecutive")]
     public async Task<IActionResult> CancelOrder(int id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;

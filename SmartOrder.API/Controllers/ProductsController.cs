@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SmartOrder.API.Models.DTOs.Product;
 using SmartOrder.API.Services;
+using System.Security.Claims;
 
 [ApiController]
 [Route("api/products")]
@@ -17,17 +18,20 @@ public class ProductsController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Create(CreateProductDto dto)
+
+    public async Task<IActionResult> Create([FromBody] CreateProductDto dto)
     {
-        var id = await _service.CreateProductAsync(dto);
+        var userId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+        var id = await _service.CreateProductAsync(userId, dto);
         return Ok(id);
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Update(int id, UpdateProductDto dto)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateProductDto dto)
     {
-        await _service.UpdateProductAsync(id, dto);
+        var userId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+        await _service.UpdateProductAsync(userId, id, dto);
         return NoContent();
     }
 
@@ -35,7 +39,8 @@ public class ProductsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
-        await _service.DeleteProductAsync(id);
+        var userId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+        await _service.DeleteProductAsync(userId, id);
         return NoContent();
     }
 
