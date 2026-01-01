@@ -1,0 +1,12 @@
+<h2>Register</h2>
+
+<form [formGroup]="form" (ngSubmit)="register($event)">
+  <input formControlName="fullName" placeholder="Full Name" />
+  <input formControlName="email" placeholder="Email" />
+  <input type="password" formControlName="password" placeholder="Password" />
+  <button type="submit">Register</button>
+</form>
+
+<p style="color:red" *ngIf="error">{{ error }}</p>
+
+<a routerLink="/login">Back to Login</a>

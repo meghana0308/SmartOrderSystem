@@ -125,8 +125,20 @@ builder.Services.AddControllers()
         };
     });
 
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngularDev", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200") // Angular frontend URL
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
+
+app.UseCors("AllowAngularDev");
 
 // -------------------- MIDDLEWARE --------------------
 
