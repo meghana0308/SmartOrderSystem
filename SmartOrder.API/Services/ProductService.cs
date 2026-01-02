@@ -13,6 +13,7 @@ public class ProductService : IProductService
     {
         _context = context;
     }
+
     private async Task<bool> UserInRoleAsync(string userId, string role)
     {
         return await _context.UserRoles.AnyAsync(ur =>
@@ -20,11 +21,10 @@ public class ProductService : IProductService
             _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == role));
     }
 
-
     public async Task<int> CreateCategoryAsync(string userId, CategoryCreateDto dto)
     {
         if (!await UserInRoleAsync(userId, "Admin"))
-            throw new UnauthorizedAccessException("Only Admin can manage categories");
+            throw new AppException("Only Admin can manage categories", 403);
 
         var category = new Category { Name = dto.Name };
         _context.Categories.Add(category);
@@ -32,10 +32,10 @@ public class ProductService : IProductService
         return category.Id;
     }
 
-
     public async Task<List<CategoryResponseDto>> GetAllCategoriesAsync()
     {
         return await _context.Categories
+            .Where(c => !c.IsDeleted)
             .Select(c => new CategoryResponseDto
             {
                 Id = c.Id,
@@ -47,10 +47,10 @@ public class ProductService : IProductService
     public async Task UpdateCategoryAsync(string userId, int id, CategoryUpdateDto dto)
     {
         if (!await UserInRoleAsync(userId, "Admin"))
-            throw new UnauthorizedAccessException("Only Admin can manage categories");
+            throw new AppException("Only Admin can manage categories", 403);
 
         var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
-        if (category == null) throw new KeyNotFoundException("Category not found");
+        if (category == null) throw new AppException("Category not found", 404);
 
         if (!string.IsNullOrWhiteSpace(dto.Name))
             category.Name = dto.Name;
@@ -59,33 +59,31 @@ public class ProductService : IProductService
         await _context.SaveChangesAsync();
     }
 
-
-
     public async Task DeleteCategoryAsync(string userId, int id)
     {
         if (!await UserInRoleAsync(userId, "Admin"))
-            throw new UnauthorizedAccessException("Only Admin can manage categories");
+            throw new AppException("Only Admin can manage categories", 403);
 
         var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
-        if (category == null) throw new KeyNotFoundException("Category not found");
+        if (category == null) throw new AppException("Category not found", 404);
 
         var hasProducts = await _context.Products.AnyAsync(p => p.CategoryId == id && !p.IsDeleted);
-        if (hasProducts) throw new InvalidOperationException("Cannot delete category with existing products");
+        if (hasProducts)
+            throw new AppException("Cannot delete category with existing products", 400);
 
         category.IsDeleted = true;
         category.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
     }
 
-
-    // ---------- PRODUCT (CATALOG ONLY) ----------
+    // ---------- PRODUCT ----------
     public async Task<int> CreateProductAsync(string userId, CreateProductDto dto)
     {
         if (!await UserInRoleAsync(userId, "Admin"))
-            throw new UnauthorizedAccessException("Only Admin can manage products");
+            throw new AppException("Only Admin can manage products", 403);
 
         var categoryExists = await _context.Categories.AnyAsync(c => c.Id == dto.CategoryId && !c.IsDeleted);
-        if (!categoryExists) throw new Exception("Invalid category");
+        if (!categoryExists) throw new AppException("Invalid category", 400);
 
         var product = new Product
         {
@@ -101,19 +99,18 @@ public class ProductService : IProductService
         return product.Id;
     }
 
-
     public async Task UpdateProductAsync(string userId, int id, UpdateProductDto dto)
     {
         if (!await UserInRoleAsync(userId, "Admin"))
-            throw new UnauthorizedAccessException("Only Admin can manage products");
+            throw new AppException("Only Admin can manage products", 403);
 
         var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
-        if (product == null) throw new KeyNotFoundException("Product not found");
+        if (product == null) throw new AppException("Product not found", 404);
 
         if (dto.CategoryId > 0)
         {
             var categoryExists = await _context.Categories.AnyAsync(c => c.Id == dto.CategoryId && !c.IsDeleted);
-            if (!categoryExists) throw new ArgumentException("Invalid CategoryId");
+            if (!categoryExists) throw new AppException("Invalid CategoryId", 400);
             product.CategoryId = dto.CategoryId;
         }
 
@@ -127,20 +124,15 @@ public class ProductService : IProductService
     public async Task DeleteProductAsync(string userId, int id)
     {
         if (!await UserInRoleAsync(userId, "Admin"))
-            throw new UnauthorizedAccessException("Only Admin can manage products");
+            throw new AppException("Only Admin can manage products", 403);
 
         var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
-        if (product == null) throw new Exception("Product not found");
+        if (product == null) throw new AppException("Product not found", 404);
 
         product.IsDeleted = true;
         product.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
     }
-
-
-
-
-
 
     public async Task<List<ProductResponseDto>> GetAllProductsAsync()
     {
@@ -171,5 +163,14 @@ public class ProductService : IProductService
             })
             .ToListAsync();
     }
+}
 
+// Custom Exception
+public class AppException : Exception
+{
+    public int StatusCode { get; }
+    public AppException(string message, int statusCode = 400) : base(message)
+    {
+        StatusCode = statusCode;
+    }
 }

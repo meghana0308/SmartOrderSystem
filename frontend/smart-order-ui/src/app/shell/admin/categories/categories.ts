@@ -77,8 +77,11 @@ export class CategoriesComponent implements OnInit, AfterViewInit {
   }
 
   deleteCategory(category: Category) {
-    if (!confirm(`Delete category "${category.name}"?`)) return
-    this.categoryService.delete(category.id)
-      .subscribe(() => this.loadCategories())
-  }
+  if (!confirm(`Delete category "${category.name}"?`)) return
+  this.categoryService.delete(category.id).subscribe({
+    next: () => this.loadCategories(),
+    error: err => alert(err) 
+  })
+}
+
 }

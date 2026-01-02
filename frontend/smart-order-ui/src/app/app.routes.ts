@@ -15,30 +15,30 @@ export const appRoutes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   {
-  path: 'admin',
-  component: AdminShellComponent,
-  canActivate: [authGuard, roleGuard],
-  data: { roles: ['Admin'] },
-  children: [
-    {
-      path: 'categories',
-      loadComponent: () =>
-        import('./shell/admin/categories/categories').then(m => m.CategoriesComponent)
-    },
-    {
-      path: 'products',
-      loadComponent: () =>
-        import('./shell/admin/products/products').then(m => m.ProductsComponent)
-    },
-    {
-      path: 'users',
-      loadComponent: () =>
-        import('./shell/admin/users/users').then(m => m.UsersComponent)
-    },
-    { path: '', redirectTo: 'categories', pathMatch: 'full' }
-  ]
-}
-,
+    path: 'admin',
+    component: AdminShellComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['Admin'] },
+    children: [
+      {
+        path: 'categories',
+        loadComponent: () =>
+          import('./shell/admin/categories/categories').then((m) => m.CategoriesComponent),
+      },
+      {
+        path: 'products',
+        loadComponent: () =>
+          import('./shell/admin/products/products').then((m) => m.ProductsComponent),
+      },
+      {
+        path: 'users',
+        loadComponent: () => import('./shell/admin/users/users').then((m) => m.UsersComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['Admin'] },
+      },
+      { path: '', redirectTo: 'categories', pathMatch: 'full' },
+    ],
+  },
   {
     path: 'sales',
     component: SalesShellComponent,
@@ -58,11 +58,27 @@ export const appRoutes: Routes = [
     data: { roles: ['FinanceOfficer'] },
   },
   {
-    path: 'customer',
-    component: CustomerShellComponent,
-    canActivate: [authGuard, roleGuard],
-    data: { roles: ['Customer'] },
+  path: 'customer',
+  component: CustomerShellComponent,
+  canActivate: [authGuard, roleGuard],
+  data: { roles: ['Customer'] },
+  children: [
+  {
+    path: 'orders',
+    loadComponent: () =>
+      import('./shell/customer/orders/customer-orders')
+        .then(m => m.CustomerOrdersComponent)
   },
+  {
+    path: 'create-order',
+    loadComponent: () =>
+      import('./shell/customer/create-order/create-order')
+        .then(m => m.CreateOrderComponent)
+  },
+  { path: '', redirectTo: 'orders', pathMatch: 'full' }
+]
+
+},
 
   { path: '**', redirectTo: '/login' },
 ];

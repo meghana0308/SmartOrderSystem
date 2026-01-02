@@ -74,19 +74,24 @@ export class ProductsComponent implements AfterViewInit {
   }
 
   openCreate() {
-    this.dialog.open(ProductDialogComponent)
-      .afterClosed()
-      .subscribe(r => r && this.loadProducts())
-  }
+  this.dialog.open(ProductDialogComponent)
+    .afterClosed()
+    .subscribe(r => r && this.loadProducts(), err => alert(err))
+}
 
-  openEdit(p: any) {
-    this.dialog.open(ProductDialogComponent, { data: { product: p } })
-      .afterClosed()
-      .subscribe(r => r && this.loadProducts())
-  }
+openEdit(p: Product) {
+  this.dialog.open(ProductDialogComponent, { data: { product: p } })
+    .afterClosed()
+    .subscribe(r => r && this.loadProducts(), err => alert(err))
+}
+
 
   deleteProduct(id: number) {
-    if (!confirm('Delete product?')) return
-    this.productService.delete(id).subscribe(() => this.loadProducts())
-  }
+  if (!confirm('Delete product?')) return
+  this.productService.delete(id).subscribe({
+    next: () => this.loadProducts(),
+    error: err => alert(err)
+  })
+}
+
 }

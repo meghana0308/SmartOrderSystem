@@ -27,11 +27,17 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> CreateCategory([FromBody] CategoryCreateDto dto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized("User not authenticated");
+        if (string.IsNullOrEmpty(userId)) return Unauthorized("User not authenticated");
 
-        var id = await _productService.CreateCategoryAsync(userId, dto);
-        return Ok(new { CategoryId = id });
+        try
+        {
+            var id = await _productService.CreateCategoryAsync(userId, dto);
+            return Ok(new { CategoryId = id });
+        }
+        catch (AppException ex)
+        {
+            return StatusCode(ex.StatusCode, ex.Message);
+        }
     }
 
     [HttpGet("categories")]
@@ -40,26 +46,39 @@ public class AdminController : ControllerBase
         return Ok(await _productService.GetAllCategoriesAsync());
     }
 
+
     [HttpPut("categories/{id}")]
     public async Task<IActionResult> UpdateCategory(int id, [FromBody] CategoryUpdateDto dto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized("User not authenticated");
+        if (string.IsNullOrEmpty(userId)) return Unauthorized("User not authenticated");
 
-        await _productService.UpdateCategoryAsync(userId, id, dto);
-        return NoContent();
+        try
+        {
+            await _productService.UpdateCategoryAsync(userId, id, dto);
+            return NoContent();
+        }
+        catch (AppException ex)
+        {
+            return StatusCode(ex.StatusCode, ex.Message);
+        }
     }
 
     [HttpDelete("categories/{id}")]
     public async Task<IActionResult> DeleteCategory(int id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized("User not authenticated");
+        if (string.IsNullOrEmpty(userId)) return Unauthorized("User not authenticated");
 
-        await _productService.DeleteCategoryAsync(userId, id);
-        return NoContent();
+        try
+        {
+            await _productService.DeleteCategoryAsync(userId, id);
+            return NoContent();
+        }
+        catch (AppException ex)
+        {
+            return StatusCode(ex.StatusCode, ex.Message);
+        }
     }
 
     [HttpGet("users")]
