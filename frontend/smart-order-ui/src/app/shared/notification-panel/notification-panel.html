@@ -1,0 +1,26 @@
+<div style="
+  position: absolute;
+  right: 20px;
+  top: 60px;
+  width: 320px;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 10px;
+  z-index: 10000;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+">
+
+
+  <div *ngFor="let n of notifications" 
+       style="padding:8px; border-bottom:1px solid #eee"
+       [style.fontWeight]="n.isRead?'normal':'bold'">
+
+    {{n.message}}
+
+    <button *ngIf="!n.isRead" (click)="markRead(n)">
+      Mark read
+    </button>
+  </div>
+
+  <button (click)="close.emit()">Close</button>
+</div>

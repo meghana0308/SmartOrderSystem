@@ -11,11 +11,17 @@ namespace SmartOrder.API.Services;
 public class OrderService : IOrderService
 {
     private readonly ApplicationDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public OrderService(ApplicationDbContext context)
+
+    public OrderService(
+    ApplicationDbContext context,
+    INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
+
 
     private async Task<bool> UserInRoleAsync(string userId, string role)
     {
@@ -63,6 +69,8 @@ public class OrderService : IOrderService
                 throw new AppException($"Insufficient stock for {product.Name}", 400);
 
             product.StockQuantity -= item.Quantity;
+            await _notificationService.NotifyWarehouseManagersLowStockAsync(product);
+
 
             order.OrderItems.Add(new OrderItem
             {
@@ -189,6 +197,8 @@ public class OrderService : IOrderService
                     product.StockQuantity -= diff;
                     existing.Quantity = item.Quantity;
                     existing.UnitPrice = product.UnitPrice;
+                    await _notificationService.NotifyWarehouseManagersLowStockAsync(product);
+
                 }
                 else
                 {
@@ -263,6 +273,8 @@ public class OrderService : IOrderService
             .FirstOrDefaultAsync(o => o.Id == orderId)
             ?? throw new AppException("Order not found", 404);
 
+        var oldStatus = order.Status;
+
         if (!IsValidTransition(order.Status, newStatus))
             throw new AppException($"Invalid transition {order.Status} → {newStatus}", 400);
 
@@ -298,6 +310,7 @@ public class OrderService : IOrderService
 
         order.Status = newStatus;
         await _context.SaveChangesAsync();
+        await _notificationService.NotifyOrderStatusChangedAsync(order, oldStatus);
     }
     public async Task<List<OrderListDto>> GetAllOrdersAsync(OrderQueryDto query)
     {

@@ -15,6 +15,7 @@ namespace SmartOrder.API.Data
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<Invoice> Invoices => Set<Invoice>();
         public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
+        public DbSet<Notification> Notifications => Set<Notification>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

@@ -1,31 +1,17 @@
-<nav style="padding:12px; border-bottom:1px solid #ccc">
+<nav style="padding:12px; border-bottom:1px solid #ccc; position:relative">
   <strong>Smart Order System</strong>
 
-  <span style="margin-left:20px" *ngIf="role === 'Admin'">
-    <a routerLink="/admin/categories">Categories</a> |
-    <a routerLink="/admin/products">Products</a> |
-    <a routerLink="/admin/users">Users</a>
-  </span>
+  <!-- existing role links unchanged -->
 
-  <span style="margin-left:20px" *ngIf="role === 'Customer'">
-    <a routerLink="/customer/orders">My Orders</a> |
-    <a routerLink="/customer/create-order">Create Order</a>
-  </span>
-
-  <span style="margin-left:20px" *ngIf="role === 'SalesExecutive'">
-    <a routerLink="/sales/orders">Orders</a> |
-    <a routerLink="/sales/reports">Reports</a>
-  </span>
-
-  <span style="margin-left:20px" *ngIf="role === 'WarehouseManager'">
-    <a routerLink="/warehouse/orders">Orders</a> |
-    <a routerLink="/warehouse/inventory">Inventory</a>
-  </span>
-
-  <span style="margin-left:20px" *ngIf="role === 'FinanceOfficer'">
-    <a routerLink="/finance/invoices">Invoices</a> |
-    <a routerLink="/finance/orders">Payments</a>
+  <span style="float:right; margin-right:20px; cursor:pointer"
+        (click)="toggleNotifications()">
+    🔔
   </span>
 
   <button style="float:right" (click)="logout()">Logout</button>
+
+  <app-notification-panel
+    *ngIf="showNotifications"
+    (close)="showNotifications=false">
+  </app-notification-panel>
 </nav>

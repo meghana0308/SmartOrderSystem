@@ -8,12 +8,18 @@ namespace SmartOrder.API.Services;
 public class InventoryService : IInventoryService
 {
     private readonly ApplicationDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public InventoryService(ApplicationDbContext context)
+
+    public InventoryService(
+    ApplicationDbContext context,
+    INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
-   
+
+
 
     public async Task<List<InventoryProductDto>> GetAllInventoryProductsAsync()
     {
@@ -62,6 +68,8 @@ public class InventoryService : IInventoryService
             throw new ArgumentException("Stock cannot be negative");
 
         product.StockQuantity = dto.StockQuantity;
+        await _notificationService.NotifyWarehouseManagersLowStockAsync(product);
+
         product.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
