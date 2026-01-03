@@ -4,7 +4,8 @@ import { Observable } from 'rxjs'
 import {
   CreateOrderDto,
   OrderListDto,
-  OrderQueryDto
+  OrderQueryDto,
+   UpdateOrderDto
 } from '../../models/order.model'
 
 @Injectable({ providedIn: 'root' })
@@ -33,6 +34,10 @@ export class OrderService {
   createOrder(payload: CreateOrderDto) {
     return this.http.post<{ message: string; orderId: number }>(this.baseUrl, payload)
   }
+   updateOrder(orderId: number, payload: UpdateOrderDto) {
+    return this.http.put<{ message: string }>(`${this.baseUrl}/${orderId}`, payload)
+  }
+
 
   cancelOrder(orderId: number) {
     return this.http.put<{ message: string }>(`${this.baseUrl}/${orderId}/cancel`, {})

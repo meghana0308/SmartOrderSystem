@@ -2,6 +2,7 @@
 using SmartOrder.API.Data;
 using SmartOrder.API.Models.DTOs.Product;
 using SmartOrder.API.Models.Entities;
+using SmartOrder.API.Helpers;
 
 namespace SmartOrder.API.Services;
 
@@ -165,12 +166,4 @@ public class ProductService : IProductService
     }
 }
 
-// Custom Exception
-public class AppException : Exception
-{
-    public int StatusCode { get; }
-    public AppException(string message, int statusCode = 400) : base(message)
-    {
-        StatusCode = statusCode;
-    }
-}
+

@@ -40,23 +40,82 @@ export const appRoutes: Routes = [
     ],
   },
   {
-    path: 'sales',
-    component: SalesShellComponent,
-    canActivate: [authGuard, roleGuard],
-    data: { roles: ['SalesExecutive'] },
-  },
+  path: 'sales',
+  component: SalesShellComponent,
+  canActivate: [authGuard, roleGuard],
+  data: { roles: ['SalesExecutive'] },
+  children: [
+    {
+      path: 'orders',
+      loadComponent: () =>
+        import('./shell/sales/orders/sales-orders/sales-orders')
+          .then(m => m.SalesOrdersComponent)
+    },
+    {
+      path: 'create-order',
+      loadComponent: () =>
+        import('./shell/sales/orders/sales-create-order/sales-create-order')
+          .then(m => m.SalesCreateOrderComponent)
+    },{
+  path: 'reports',
+  loadComponent: () =>
+    import('./shell/sales/reports/sales-reports')
+      .then(m => m.SalesReportsComponent)
+},
+
+    { path: '', redirectTo: 'orders', pathMatch: 'full' }
+  ]
+},
   {
-    path: 'warehouse',
-    component: WarehouseShellComponent,
-    canActivate: [authGuard, roleGuard],
-    data: { roles: ['WarehouseManager'] },
-  },
+  path: 'warehouse',
+  component: WarehouseShellComponent,
+  canActivate: [authGuard, roleGuard],
+  data: { roles: ['WarehouseManager'] },
+  children: [
+    {
+      path: 'orders',
+      loadComponent: () =>
+        import('./shell/warehouse/orders-status/warehouse-orders-status')
+          .then(m => m.WarehouseOrdersComponent)
+    },
+    {
+      path: 'inventory',
+      loadComponent: () =>
+        import('./shell/warehouse/inventory/warehouse-inventory')
+          .then(m => m.WarehouseInventoryComponent)
+    },
+    {
+      path: 'reports',
+      loadComponent: () =>
+        import('./shell/warehouse/reports/warehouse-reports')
+          .then(m => m.WarehouseReportsComponent)
+    },
+    { path: '', redirectTo: 'orders', pathMatch: 'full' }
+  ]
+}
+,
   {
-    path: 'finance',
-    component: FinanceShellComponent,
-    canActivate: [authGuard, roleGuard],
-    data: { roles: ['FinanceOfficer'] },
-  },
+  path: 'finance',
+  component: FinanceShellComponent,
+  canActivate: [authGuard, roleGuard],
+  data: { roles: ['FinanceOfficer'] },
+  children: [
+    {
+      path: 'invoices',
+      loadComponent: () =>
+        import('./shell/finance/invoices/finance-invoices')
+          .then(m => m.FinanceInvoicesComponent),
+    },{
+  path: 'orders',
+  loadComponent: () =>
+    import('./shell/finance/invoices/finance-orders')
+      .then(m => m.FinanceOrdersComponent),
+},
+
+    { path: '', redirectTo: 'invoices', pathMatch: 'full' },
+  ],
+},
+
   {
   path: 'customer',
   component: CustomerShellComponent,

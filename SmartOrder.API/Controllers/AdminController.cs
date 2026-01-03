@@ -6,6 +6,7 @@ using SmartOrder.API.Models.DTOs.Product;
 using SmartOrder.API.Models.Entities;
 using SmartOrder.API.Services;
 using System.Security.Claims;
+using SmartOrder.API.Helpers;
 
 namespace SmartOrder.API.Controllers;
 

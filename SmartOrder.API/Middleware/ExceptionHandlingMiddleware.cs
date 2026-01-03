@@ -1,5 +1,7 @@
-﻿using System.Net;
+﻿using SmartOrder.API.Services;
+using System.Net;
 using System.Text.Json;
+using SmartOrder.API.Helpers;
 
 namespace SmartOrder.API.Middleware
 {
@@ -19,6 +21,13 @@ namespace SmartOrder.API.Middleware
             try
             {
                 await _next(context);
+            }
+            catch (AppException ex)
+            {
+                context.Response.ContentType = "application/json";
+                context.Response.StatusCode = ex.StatusCode;
+                var result = JsonSerializer.Serialize(new { message = ex.Message });
+                await context.Response.WriteAsync(result);
             }
             catch (Exception ex)
             {

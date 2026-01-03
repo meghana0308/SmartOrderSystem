@@ -4,6 +4,7 @@ using SmartOrder.API.Enums;
 using SmartOrder.API.Models.DTOs.Orders;
 using SmartOrder.API.Models.Entities;
 using SmartOrder.API.Services.Interfaces;
+using SmartOrder.API.Helpers;
 
 namespace SmartOrder.API.Services;
 
@@ -23,33 +24,22 @@ public class OrderService : IOrderService
             _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == role));
     }
 
-
     public async Task<int> CreateOrderAsync(string userId, CreateOrderDto dto)
     {
-        if (dto.Items.Count == 0)
-            throw new ArgumentException("Order must contain at least one item");
+        if (dto.Items == null || dto.Items.Count == 0)
+            throw new AppException("Order must contain at least one item", 400);
 
         var isSales = await UserInRoleAsync(userId, "SalesExecutive");
         var isCustomer = await UserInRoleAsync(userId, "Customer");
 
         if (!isSales && !isCustomer)
-            throw new UnauthorizedAccessException("Only Customer or SalesExecutive can create orders");
+            throw new AppException("Only Customer or SalesExecutive can create orders", 403);
 
-        string customerId;
-        if (isSales)
-        {
-            if (string.IsNullOrEmpty(dto.CustomerId))
-                throw new ArgumentException("CustomerId is required for Sales orders");
-            customerId = dto.CustomerId;
-        }
-        else
-        {
-            customerId = userId; // Customer placing order
-        }
+        string customerId = isSales ? dto.CustomerId ?? throw new AppException("CustomerId is required for Sales orders", 400) : userId;
 
         var customerExists = await _context.Users.AnyAsync(u => u.Id == customerId);
         if (!customerExists)
-            throw new ArgumentException("Invalid CustomerId");
+            throw new AppException("Invalid CustomerId", 400);
 
         var order = new Order
         {
@@ -66,14 +56,11 @@ public class OrderService : IOrderService
 
         foreach (var item in dto.Items)
         {
-            var product = await _context.Products
-                .FirstOrDefaultAsync(p => p.Id == item.ProductId && !p.IsDeleted);
-
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == item.ProductId && !p.IsDeleted);
             if (product == null)
-                throw new KeyNotFoundException($"Product {item.ProductId} not found");
-
+                throw new AppException($"Product {item.ProductId} not found", 400);
             if (product.StockQuantity < item.Quantity)
-                throw new InvalidOperationException($"Insufficient stock for {product.Name}");
+                throw new AppException($"Insufficient stock for {product.Name}", 400);
 
             product.StockQuantity -= item.Quantity;
 
@@ -93,16 +80,17 @@ public class OrderService : IOrderService
         return order.Id;
     }
 
-
     public async Task<List<OrderListDto>> GetMyOrdersAsync(string userId, OrderQueryDto query)
     {
-        var orders = _context.Orders.Where(o => o.CustomerId == userId);
+        IQueryable<Order> orders = _context.Orders.Where(o => o.CustomerId == userId);
 
         if (!string.IsNullOrEmpty(query.Status) &&
             Enum.TryParse<OrderStatus>(query.Status, true, out var status))
             orders = orders.Where(o => o.Status == status);
 
         return await orders
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
             .OrderByDescending(o => o.OrderDate)
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
@@ -111,14 +99,21 @@ public class OrderService : IOrderService
                 OrderId = o.Id,
                 OrderDate = o.OrderDate,
                 Status = o.Status.ToString(),
-                TotalAmount = o.TotalAmount
+                TotalAmount = o.TotalAmount,
+                Items = o.OrderItems.Select(oi => new OrderItemViewDto
+                {
+                    ProductId = oi.ProductId,
+                    ProductName = oi.Product.Name,
+                    UnitPrice = oi.UnitPrice,
+                    Quantity = oi.Quantity
+                }).ToList()
             })
             .ToListAsync();
     }
 
     public async Task<List<OrderListDto>> GetCreatedOrdersAsync(string userId, OrderQueryDto query)
     {
-        var orders = _context.Orders.Where(o => o.CreatedByUserId == userId);
+        IQueryable<Order> orders = _context.Orders.Where(o => o.CreatedByUserId == userId);
 
         if (!string.IsNullOrEmpty(query.Status) &&
             Enum.TryParse<OrderStatus>(query.Status, true, out var status))
@@ -133,64 +128,84 @@ public class OrderService : IOrderService
                 OrderId = o.Id,
                 OrderDate = o.OrderDate,
                 Status = o.Status.ToString(),
-                TotalAmount = o.TotalAmount
+                TotalAmount = o.TotalAmount,
+                Items = o.OrderItems.Select(oi => new OrderItemViewDto
+                {
+                    ProductId = oi.ProductId,
+                    ProductName = oi.Product.Name,
+                    UnitPrice = oi.UnitPrice,
+                    Quantity = oi.Quantity
+                }).ToList()
             })
             .ToListAsync();
     }
 
     public async Task UpdateOrderAsync(int orderId, string userId, UpdateOrderDto dto)
     {
+        using var tx = await _context.Database.BeginTransactionAsync();
+
         var order = await _context.Orders
             .Include(o => o.OrderItems)
-            .FirstOrDefaultAsync(o => o.Id == orderId);
-
-        if (order == null)
-            throw new KeyNotFoundException("Order not found");
+            .FirstOrDefaultAsync(o => o.Id == orderId)
+            ?? throw new AppException("Order not found", 404);
 
         if (order.Status >= OrderStatus.Shipped)
-            throw new InvalidOperationException("Only orders before shipment can be edited");
+            throw new AppException("Only orders before shipment can be edited", 400);
 
         if (order.CreatedByUserId != userId && order.CustomerId != userId)
-            throw new UnauthorizedAccessException("You can only edit your own orders");
-
-        decimal total = order.OrderItems.Sum(oi => oi.UnitPrice * oi.Quantity);
+            throw new AppException("You can only edit your own orders", 403);
 
         if (dto.Items != null)
         {
-            foreach (var dtoItem in dto.Items)
-            {
-                if (dtoItem.Quantity <= 0) continue;
+            var incoming = dto.Items
+                .GroupBy(i => i.ProductId)
+                .Select(g => new { ProductId = g.Key, Quantity = g.Sum(x => x.Quantity) })
+                .ToList();
 
-                var existingItem = order.OrderItems.FirstOrDefault(oi => oi.ProductId == dtoItem.ProductId);
-                if (existingItem != null)
+            var toRemove = order.OrderItems
+                .Where(oi => !incoming.Any(i => i.ProductId == oi.ProductId))
+                .ToList();
+
+            foreach (var rem in toRemove)
+            {
+                var p = await _context.Products.FindAsync(rem.ProductId);
+                if (p != null) p.StockQuantity += rem.Quantity;
+                order.OrderItems.Remove(rem);
+            }
+
+            foreach (var item in incoming)
+            {
+                var product = await _context.Products.FindAsync(item.ProductId)
+                    ?? throw new AppException($"Product {item.ProductId} not found", 400);
+
+                var existing = order.OrderItems.FirstOrDefault(x => x.ProductId == item.ProductId);
+
+                if (existing != null)
                 {
-                    var product = await _context.Products.FindAsync(dtoItem.ProductId);
-                    int diff = dtoItem.Quantity - existingItem.Quantity;
+                    var diff = item.Quantity - existing.Quantity;
                     if (product.StockQuantity < diff)
-                        throw new InvalidOperationException($"Insufficient stock for {product.Name}");
+                        throw new AppException($"Insufficient stock for {product.Name}", 400);
+
                     product.StockQuantity -= diff;
-                    existingItem.Quantity = dtoItem.Quantity;
-                    existingItem.UnitPrice = product.UnitPrice;
+                    existing.Quantity = item.Quantity;
+                    existing.UnitPrice = product.UnitPrice;
                 }
                 else
                 {
-                    var product = await _context.Products.FindAsync(dtoItem.ProductId);
-                    if (product == null)
-                        throw new KeyNotFoundException($"Product {dtoItem.ProductId} not found");
-                    if (product.StockQuantity < dtoItem.Quantity)
-                        throw new InvalidOperationException($"Insufficient stock for {product.Name}");
-                    product.StockQuantity -= dtoItem.Quantity;
+                    if (product.StockQuantity < item.Quantity)
+                        throw new AppException($"Insufficient stock for {product.Name}", 400);
+
+                    product.StockQuantity -= item.Quantity;
                     order.OrderItems.Add(new OrderItem
                     {
                         ProductId = product.Id,
-                        Quantity = dtoItem.Quantity,
+                        Quantity = item.Quantity,
                         UnitPrice = product.UnitPrice
                     });
                 }
             }
 
-            total = order.OrderItems.Sum(oi => oi.UnitPrice * oi.Quantity);
-            order.TotalAmount = total;
+            order.TotalAmount = order.OrderItems.Sum(i => i.UnitPrice * i.Quantity);
         }
 
         if (dto.PaymentMode.HasValue)
@@ -201,38 +216,34 @@ public class OrderService : IOrderService
                 : PaymentStatus.Pending;
         }
 
-        order.OrderDate = DateTime.UtcNow;
         await _context.SaveChangesAsync();
+        await tx.CommitAsync();
     }
+
 
     public async Task CancelOrderAsync(int orderId, string userId)
     {
         var order = await _context.Orders
             .Include(o => o.OrderItems)
-            .FirstOrDefaultAsync(o => o.Id == orderId);
-
-        if (order == null)
-            throw new KeyNotFoundException("Order not found");
+            .FirstOrDefaultAsync(o => o.Id == orderId)
+            ?? throw new AppException("Order not found", 404);
 
         if (order.Status is OrderStatus.Shipped or OrderStatus.Delivered)
-            throw new InvalidOperationException("Order cannot be cancelled after shipping");
+            throw new AppException("Order cannot be cancelled after shipping", 400);
 
         foreach (var item in order.OrderItems)
         {
             var product = await _context.Products.FindAsync(item.ProductId);
-            if (product != null)
-                product.StockQuantity += item.Quantity;
+            if (product != null) product.StockQuantity += item.Quantity;
         }
 
         order.Status = OrderStatus.Cancelled;
-
         order.PaymentStatus = order.PaymentMode == PaymentMode.PayNow
             ? PaymentStatus.Refunded
             : PaymentStatus.Unpaid;
 
         await _context.SaveChangesAsync();
     }
-
 
     private static bool IsValidTransition(OrderStatus current, OrderStatus next) =>
         current switch
@@ -249,22 +260,18 @@ public class OrderService : IOrderService
         var order = await _context.Orders
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
-            .FirstOrDefaultAsync(o => o.Id == orderId);
-
-        if (order == null)
-            throw new KeyNotFoundException("Order not found");
+            .FirstOrDefaultAsync(o => o.Id == orderId)
+            ?? throw new AppException("Order not found", 404);
 
         if (!IsValidTransition(order.Status, newStatus))
-            throw new InvalidOperationException($"Invalid transition {order.Status} → {newStatus}");
+            throw new AppException($"Invalid transition {order.Status} → {newStatus}", 400);
 
         if (newStatus == OrderStatus.Shipped)
         {
             if (order.PaymentStatus != PaymentStatus.Paid)
-                throw new InvalidOperationException("Order cannot be shipped until payment is completed");
+                throw new AppException("Order cannot be shipped until payment is completed", 400);
 
-            var invoiceExists = await _context.Invoices
-                .AnyAsync(i => i.OrderId == order.Id);
-
+            var invoiceExists = await _context.Invoices.AnyAsync(i => i.OrderId == order.Id);
             if (!invoiceExists)
             {
                 var invoice = new Invoice
@@ -292,4 +299,31 @@ public class OrderService : IOrderService
         order.Status = newStatus;
         await _context.SaveChangesAsync();
     }
+    public async Task<List<OrderListDto>> GetAllOrdersAsync(OrderQueryDto query)
+    {
+        IQueryable<Order> orders = _context.Orders;
+
+        return await orders
+            .OrderByDescending(o => o.OrderDate)
+            .Select(o => new OrderListDto
+            {
+                OrderId = o.Id,
+                OrderDate = o.OrderDate,
+                Status = o.Status.ToString(),
+                TotalAmount = o.TotalAmount,
+                PaymentStatus = o.PaymentStatus.ToString(), // <-- add this line
+                Items = o.OrderItems.Select(oi => new OrderItemViewDto
+                {
+                    ProductId = oi.ProductId,
+                    ProductName = oi.Product.Name,
+                    UnitPrice = oi.UnitPrice,
+                    Quantity = oi.Quantity
+                }).ToList()
+            })
+            .ToListAsync();
+    }
+
+
 }
+
+

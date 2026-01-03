@@ -1,0 +1,69 @@
+<div class="table-wrapper">
+  <h2>Warehouse Inventory</h2>
+
+  <mat-form-field appearance="outline" class="search-box">
+    <mat-label>Search Products</mat-label>
+    <input matInput (keyup)="applyFilter($event)">
+  </mat-form-field>
+
+  <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z2">
+
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Product</th>
+      <td mat-cell *matCellDef="let row">{{row.name}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="categoryName">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Category</th>
+      <td mat-cell *matCellDef="let row">{{row.categoryName}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="stockQuantity">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Stock</th>
+      <td mat-cell *matCellDef="let row">{{row.stockQuantity}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="reorderLevel">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Reorder Level</th>
+      <td mat-cell *matCellDef="let row">{{row.reorderLevel}}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>Actions</th>
+      <td mat-cell *matCellDef="let row">
+        <button mat-raised-button color="primary" (click)="openPopup(row)">
+          Update Stock
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+  </table>
+
+  <mat-paginator [pageSizeOptions]="[5,10,20]" showFirstLastButtons></mat-paginator>
+</div>
+
+<dialog id="stockDialog">
+  <h3>Update Stock / Reorder Level</h3>
+
+  <p>Product: {{selectedProduct?.name}}</p>
+
+  <label>
+    Stock Quantity:
+    <input type="number" [(ngModel)]="newStock">
+  </label>
+
+  <br>
+
+  <label>
+    Reorder Level:
+    <input type="number" [(ngModel)]="newReorderLevel">
+  </label>
+
+  <br><br>
+
+  <button mat-raised-button color="primary" (click)="saveChanges()">Save</button>
+  <button mat-raised-button (click)="closePopup()">Cancel</button>
+</dialog>

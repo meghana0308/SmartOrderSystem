@@ -1,0 +1,22 @@
+<div *ngIf="invoice">
+  <h2>Invoice #{{ invoice.invoiceId }}</h2>
+  <p>Order ID: {{ invoice.orderId }}</p>
+  <p>Date: {{ invoice.invoiceDate | date:'short' }}</p>
+  <p>Status: {{ invoice.paymentStatus }}</p>
+  <p>Total Amount: {{ invoice.totalAmount | currency }}</p>
+
+  <table>
+    <tr>
+      <th>Product</th>
+      <th>Qty</th>
+      <th>Unit</th>
+      <th>Line Total</th>
+    </tr>
+    <tr *ngFor="let item of invoice.items">
+      <td>{{ item.productName }}</td>
+      <td>{{ item.quantity }}</td>
+      <td>{{ item.unitPrice | currency }}</td>
+      <td>{{ item.lineTotal | currency }}</td>
+    </tr>
+  </table>
+</div>

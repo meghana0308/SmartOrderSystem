@@ -14,6 +14,6 @@ namespace SmartOrder.API.Services.Interfaces
 
         Task UpdateOrderStatusAsync(int orderId, string warehouseUserId, OrderStatus status);
 
-
+        Task<List<OrderListDto>> GetAllOrdersAsync(OrderQueryDto query);
     }
 }

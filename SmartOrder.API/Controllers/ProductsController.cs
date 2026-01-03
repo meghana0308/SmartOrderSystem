@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SmartOrder.API.Models.DTOs.Product;
 using SmartOrder.API.Services;
 using System.Security.Claims;
+using SmartOrder.API.Helpers;
 
 [ApiController]
 [Route("api/products")]

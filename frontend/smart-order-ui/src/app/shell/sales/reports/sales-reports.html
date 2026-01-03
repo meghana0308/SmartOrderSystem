@@ -1,0 +1,97 @@
+<h2>Sales Reports</h2>
+
+<!-- DATE FILTER -->
+<div style="margin-bottom:16px">
+  <label>From:</label>
+  <input type="date" [(ngModel)]="fromDate">
+  <label style="margin-left:10px">To:</label>
+  <input type="date" [(ngModel)]="toDate">
+  <button (click)="loadAll()">Apply</button>
+</div>
+
+<!-- SUMMARY CARDS -->
+<div style="display:flex;gap:20px;margin-bottom:20px">
+  <div class="card">
+    <h3>Total Orders</h3>
+    <strong>{{totalOrders}}</strong>
+  </div>
+  <div class="card">
+    <h3>Total Revenue</h3>
+    <strong>{{totalRevenue | currency:'INR'}}</strong>
+  </div>
+</div>
+
+<hr>
+
+<!-- SALES BY DATE -->
+<h3>Sales By Date</h3>
+<table mat-table [dataSource]="salesByDate" class="mat-elevation-z2">
+
+  <ng-container matColumnDef="date">
+    <th mat-header-cell *matHeaderCellDef>Date</th>
+    <td mat-cell *matCellDef="let r">{{r.date | date}}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="ordersCount">
+    <th mat-header-cell *matHeaderCellDef>Orders</th>
+    <td mat-cell *matCellDef="let r">{{r.ordersCount}}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="totalSales">
+    <th mat-header-cell *matHeaderCellDef>Total Sales</th>
+    <td mat-cell *matCellDef="let r">{{r.totalSales | currency:'INR'}}</td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="['date','ordersCount','totalSales']"></tr>
+  <tr mat-row *matRowDef="let row; columns:['date','ordersCount','totalSales']"></tr>
+</table>
+
+<hr>
+
+<!-- SALES BY PRODUCT -->
+<h3>Sales By Product</h3>
+<table mat-table [dataSource]="salesByProduct" class="mat-elevation-z2">
+
+  <ng-container matColumnDef="productName">
+    <th mat-header-cell *matHeaderCellDef>Product</th>
+    <td mat-cell *matCellDef="let p">{{p.productName}}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="qty">
+    <th mat-header-cell *matHeaderCellDef>Qty Sold</th>
+    <td mat-cell *matCellDef="let p">{{p.totalQuantitySold}}</td>
+  </ng-container>
+
+  <ng-container matColumnDef="revenue">
+    <th mat-header-cell *matHeaderCellDef>Revenue</th>
+    <td mat-cell *matCellDef="let p">{{p.totalRevenue | currency:'INR'}}</td>
+  </ng-container>
+
+  <tr mat-header-row *matHeaderRowDef="['productName','qty','revenue']"></tr>
+  <tr mat-row *matRowDef="let row; columns:['productName','qty','revenue']"></tr>
+</table>
+
+<hr>
+
+<!-- TOP / LOW SELLING -->
+<div style="display:flex;gap:40px">
+
+  <div>
+    <h3>Top Selling Products</h3>
+    <ul>
+      <li *ngFor="let p of topProducts">
+        {{p.productName}} — {{p.totalRevenue | currency:'INR'}}
+      </li>
+    </ul>
+  </div>
+
+  <div>
+    <h3>Low Selling Products</h3>
+    <ul>
+      <li *ngFor="let p of lowProducts">
+        {{p.productName}} — {{p.totalRevenue | currency:'INR'}}
+      </li>
+    </ul>
+  </div>
+
+</div>

@@ -1,0 +1,47 @@
+<h2>Low Stock Products</h2>
+<table border="1" width="100%">
+  <tr>
+    <th>Product</th>
+    <th>Category</th>
+    <th>Stock</th>
+    <th>Reorder Level</th>
+  </tr>
+  <tr *ngFor="let p of lowStock">
+    <td>{{ p.name }}</td>
+    <td>{{ p.categoryName }}</td>
+    <td>{{ p.stockQuantity }}</td>
+    <td>{{ p.reorderLevel }}</td>
+  </tr>
+</table>
+
+<hr>
+
+<h2>Top Selling Products</h2>
+<table border="1" width="100%">
+  <tr>
+    <th>Product</th>
+    <th>Quantity Sold</th>
+    <th>Total Revenue</th>
+  </tr>
+  <tr *ngFor="let p of topSelling">
+    <td>{{ p.productName }}</td>
+    <td>{{ p.totalQuantitySold }}</td>
+    <td>{{ p.totalRevenue | currency }}</td>
+  </tr>
+</table>
+
+<hr>
+
+<h2>Low Selling Products</h2>
+<table border="1" width="100%">
+  <tr>
+    <th>Product</th>
+    <th>Quantity Sold</th>
+    <th>Total Revenue</th>
+  </tr>
+  <tr *ngFor="let p of lowSelling">
+    <td>{{ p.productName }}</td>
+    <td>{{ p.totalQuantitySold }}</td>
+    <td>{{ p.totalRevenue | currency }}</td>
+  </tr>
+</table>

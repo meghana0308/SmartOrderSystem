@@ -9,9 +9,19 @@ export interface CreateOrderDto {
   customerId?: string
 }
 
+export interface UpdateOrderItemDto {
+  productId: number
+  quantity: number
+}
+
+export interface UpdateOrderDto {
+  items?: UpdateOrderItemDto[]
+  paymentMode?: 'PayNow' | 'PayLater'
+}
+
 export interface OrderItemDto {
   productId: number
-  name: string
+  productName: string
   unitPrice: number
   quantity: number
 }
@@ -20,12 +30,13 @@ export interface OrderListDto {
   orderId: number
   orderDate: string
   status: string
+  paymentStatus: string
   totalAmount: number
-  items?: OrderItemDto[] // include products in each order
+  items: OrderItemDto[]
 }
 
 export interface OrderQueryDto {
-  page?: number
-  pageSize?: number
+  page: number
+  pageSize: number
   status?: string
 }

@@ -1,4 +1,3 @@
-<div *ngIf="loading">Loading orders...</div>
 <table *ngIf="!loading">
   <thead>
     <tr>
@@ -10,22 +9,34 @@
       <th>Actions</th>
     </tr>
   </thead>
+
   <tbody>
     <tr *ngFor="let o of orders">
-      <td>{{o.orderId}}</td>
-      <td>{{o.orderDate | date:'short'}}</td>
-      <td>{{o.status}}</td>
-      <td>{{o.totalAmount | currency}}</td>
+      <td>{{ o.orderId }}</td>
+      <td>{{ o.orderDate | date:'short' }}</td>
+      <td>{{ o.status }}</td>
+      <td>{{ o.totalAmount | currency }}</td>
+
       <td>
-        <ul>
+        <ul *ngIf="o.items.length > 0; else noItems">
           <li *ngFor="let p of o.items">
-            {{p.name}} - {{p.quantity}} x {{p.unitPrice | currency}} = {{p.quantity * p.unitPrice | currency}}
+            {{ p.productName }} —
+            {{ p.quantity }} × {{ p.unitPrice | currency }}
           </li>
         </ul>
+        <ng-template #noItems>No products</ng-template>
       </td>
+
       <td>
-        <button *ngIf="canCancel(o)" (click)="cancelOrder(o.orderId)">Cancel</button>
+        <button *ngIf="canEdit(o)" (click)="startEdit(o)">Edit</button>
+        <button *ngIf="canEdit(o)" (click)="cancelOrder(o.orderId)">Cancel</button>
       </td>
     </tr>
   </tbody>
 </table>
+
+<app-edit-order
+  *ngIf="editingOrder"
+  [order]="editingOrder"
+  (updated)="onUpdated()">
+</app-edit-order>

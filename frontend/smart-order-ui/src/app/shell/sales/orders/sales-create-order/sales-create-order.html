@@ -1,0 +1,60 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+
+  <!-- CUSTOMER -->
+  <div>
+    <label>Customer</label>
+    <select formControlName="customerId">
+      <option [ngValue]="null">Select Customer</option>
+      <option *ngFor="let c of customers" [ngValue]="c.userId">
+        {{ c.fullName }} ({{ c.email }})
+      </option>
+    </select>
+  </div>
+
+  <!-- ORDER ITEMS -->
+  <div formArrayName="items">
+    <div
+      *ngFor="let item of items.controls; let i = index"
+      [formGroupName]="i"
+      style="margin-bottom:10px"
+    >
+
+      <select formControlName="productId">
+        <option [ngValue]="null">Select Product</option>
+        <option *ngFor="let p of products" [ngValue]="p.id">
+          {{ p.name }} ({{ p.unitPrice | currency }})
+        </option>
+      </select>
+
+      <input type="number" min="1" formControlName="quantity">
+
+      <span>
+        Total: {{ getItemTotal(item) | currency }}
+      </span>
+
+      <button type="button" (click)="removeItem(i)" *ngIf="items.length > 1">
+        Remove
+      </button>
+    </div>
+  </div>
+
+  <button type="button" (click)="addItem()">Add Product</button>
+
+  <!-- PAYMENT -->
+  <div>
+    <label>Payment Mode</label>
+    <select formControlName="paymentMode">
+      <option value="PayLater">Pay Later</option>
+      <option value="PayNow">Pay Now</option>
+    </select>
+  </div>
+
+  <div>
+    <strong>Order Total: {{ totalAmount | currency }}</strong>
+  </div>
+
+  <button type="submit" [disabled]="submitting">
+    Place Order
+  </button>
+
+</form>
